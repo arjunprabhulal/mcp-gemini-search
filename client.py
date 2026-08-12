@@ -7,7 +7,7 @@ from datetime import datetime
 from google import genai
 from google.genai import types
 from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+from mcp.client.sse import sse_client
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
@@ -20,7 +20,7 @@ server_params = StdioServerParameters(
 
 async def run():
     # Remove debug prints
-    async with stdio_client(server_params) as (read, write):
+    async with sse_client(url="http://localhost:3001/sse") as (read, write):
         async with ClientSession(read, write) as session:
             prompt = f"Find Flights from Atlanta to Las Vegas 2025-05-05"
             await session.initialize()
