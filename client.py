@@ -1,9 +1,9 @@
 # pip install google-generativeai mcp
 import asyncio
-import os
 # Add json import for formatting output
 import json
-from datetime import datetime
+import os
+
 from google import genai
 from google.genai import types
 from mcp import ClientSession, StdioServerParameters
@@ -11,7 +11,6 @@ from mcp.client.sse import sse_client
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-# Re-add StdioServerParameters, setting args for stdio
 server_params = StdioServerParameters(
     command="mcp-flight-search",
     args=["--connection_type", "stdio"],
@@ -22,7 +21,7 @@ async def run():
     # Remove debug prints
     async with sse_client(url="http://localhost:3001/sse") as (read, write):
         async with ClientSession(read, write) as session:
-            prompt = f"Find Flights from Atlanta to Las Vegas 2025-05-05"
+            prompt = f"Find all flights from Chennai to Singapore for 2025-09-01."
             await session.initialize()
             # Remove debug prints
 
@@ -47,7 +46,7 @@ async def run():
             # Remove debug prints
 
             response = client.models.generate_content(
-                model="gemini-2.5-pro-exp-03-25",
+                model="gemini-2.5-pro",
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     temperature=0,
@@ -66,8 +65,12 @@ async def run():
                 # Parse and print formatted JSON result
                 print("--- Formatted Result ---") # Add header for clarity
                 try:
-                    flight_data = json.loads(result.content[0].text)
-                    print(json.dumps(flight_data, indent=2))
+                    # Add all the flights and print the result as a JSON object
+                    flights = []
+                    for content in result.content:
+                        flight_data = json.loads(content.text)
+                        flights.append(flight_data)
+                    print(json.dumps(flights, indent=2))  # Pretty print JSON
                 except json.JSONDecodeError:
                     print("MCP server returned non-JSON response:")
                     print(result.content[0].text)
